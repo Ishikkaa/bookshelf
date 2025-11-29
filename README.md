@@ -39,4 +39,68 @@ The project showcases strong backend architecture, clean frontend design, and AI
 ---
 
 ## 📁 Project Structure
+root/
+├── backend/
+│ ├── src/main/java/com.bookshelf
+│ └── pom.xml
+├── frontend/
+│ ├── src/
+│ └── package.json
+├── README.md
+└── .gitignore
+
+
+---
+
+## ⚙️ Setup Instructions
+
+### 🖥 Backend
+
+
+cd backend
+mvn clean install
+mvn spring-boot:run
+
+
+### 💻 Frontend
+
+
+cd frontend
+npm install
+npm run dev
+
+
+---
+
+## 🌐 API Documentation (Example)
+| Method | Endpoint | Description |
+|--------|-----------|-------------|
+| GET | `/api/books` | Get all books |
+| POST | `/api/auth/login` | User login |
+| POST | `/api/order/place` | Place order |
+
+---
+
+## 📸 Screenshots (Optional)
+_Add UI screenshots here later._
+
+---
+
+## 📌 Roadmap
+- [ ] Fully polished UI  
+- [ ] Voice-based semantic search  
+- [ ] On-platform AI chat helper  
+- [ ] Book preview reader mode  
+
+---
+
+## 🧑‍💻 Author
+**Ishika Pandita**  
+📧 ishikapandita8@gmail.com  
+🔗 [LinkedIn](YOUR-LINK-HERE)
+
+---
+
+## 📜 License
+This project is under the MIT License.
 
