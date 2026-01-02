@@ -1,5 +1,6 @@
 package com.ishikapandita.bookshelf.controller;
 
+import com.ishikapandita.bookshelf.dtos.CartDto;
 import com.ishikapandita.bookshelf.model.Cart;
 import com.ishikapandita.bookshelf.response.ApiResponse;
 import com.ishikapandita.bookshelf.service.cart.ICartService;
@@ -16,7 +17,8 @@ public class CartController {
     @GetMapping("/user/{userId}/cart")
     public ResponseEntity<ApiResponse> getUserCart(@PathVariable Long userId){
         Cart cart = cartService.getCartByUserId(userId);
-        return ResponseEntity.ok(new ApiResponse("Success", cart));
+        CartDto dto = cartService.convertToDto(cart);
+        return ResponseEntity.ok(new ApiResponse("Success", dto));
     }
 
     @DeleteMapping("/cart/{cartId}/clear")

@@ -11,6 +11,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.Path;
@@ -37,6 +38,7 @@ public class BookController {
         return ResponseEntity.ok(new ApiResponse("Found!", bookDto));
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> addBook(@RequestBody AddBookRequest request) {
         Book theBook = bookService.addBook(request);
@@ -44,6 +46,7 @@ public class BookController {
         return ResponseEntity.ok(new ApiResponse("Book added successfully!", bookDto));
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/book/{bookId}/update")
     public ResponseEntity<ApiResponse> updateBook(@RequestBody UpdateBookRequest request, @PathVariable Long bookId) {
         Book theBook = bookService.UpdateBook(request, bookId);
@@ -51,6 +54,7 @@ public class BookController {
         return ResponseEntity.ok(new ApiResponse("Book updated successfully!", bookDto));
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/book/{bookId}/delete")
     public ResponseEntity<ApiResponse> deleteBook(@PathVariable Long bookId) {
         bookService.deleteBookById(bookId);
@@ -90,6 +94,11 @@ public class BookController {
         List<Book> books = bookService.getBooksByGenre(genre);
         List<BookDto> convertedBooks = bookService.getConvertedBooks(books);
         return ResponseEntity.ok(new ApiResponse("success", convertedBooks));
+    }
+
+    @GetMapping("/distinct/authors")
+    public ResponseEntity<ApiResponse> getDistinctBrands(){
+        return ResponseEntity.ok(new ApiResponse("Found", bookService.getAllDistinctAuthors()));
     }
 
 }

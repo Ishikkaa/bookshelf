@@ -12,11 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,16 +70,8 @@ public class BookService implements IBookService {
         existingBook.setIsbn(request.getIsbn());
         existingBook.setInventory(request.getInventory());
         existingBook.setDescription(request.getDescription());
-
-        //create new genre if the genre in request does not exist
-        String genreName = request.getGenre().getName();
-        Genre genre = genreRepository.findByName(genreName);
-        if (genre == null) {
-            genre = new Genre(genreName);
-            genreRepository.save(genre);
-        }
+        Genre genre = genreRepository.findByName(request.getGenre().getName());
         existingBook.setGenre(genre);
-
         return existingBook;
     }
 
@@ -150,16 +139,14 @@ public class BookService implements IBookService {
         return bookRepository.findByTitle(title);
     }
 
-//    @Override
-//    public List<Book> getDistinctBooksByTitle(){
-//        List<Book> books = getAllBooks();
-//        Map<String, Book> distinctBookMap = books.stream()
-//                .collect(Collectors.toMap(
-//                        Book :: getTitle,
-//                        book -> book,
-//                        (existing, replacement) -> existing));
-//        return new ArrayList<>(distinctBookMap.values());
-//    }
+    @Override
+    public List<String> getAllDistinctAuthors(){
+        return bookRepository.findAll()
+                .stream()
+                .map(Book :: getAuthor)
+                .distinct()
+                .toList();
+    }
 
     @Override
     public List<BookDto> getConvertedBooks(List<Book> books) {

@@ -6,6 +6,7 @@ import com.ishikapandita.bookshelf.response.ApiResponse;
 import com.ishikapandita.bookshelf.service.cart.ICartItemService;
 import com.ishikapandita.bookshelf.service.cart.ICartService;
 import com.ishikapandita.bookshelf.service.user.IUserService;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class CartItemController {
     @PostMapping("/item/add")
     public ResponseEntity<ApiResponse> addItemToCart(
             @RequestParam Long bookId,
-            @RequestParam int quantity){
+            @RequestParam @Min(1) int quantity){
         User user = userService.getAuthenticatedUser();
         Cart cart = cartService.initializeNewCartForUser(user);
         cartItemService.addItemToCart(cart.getId(), bookId, quantity);

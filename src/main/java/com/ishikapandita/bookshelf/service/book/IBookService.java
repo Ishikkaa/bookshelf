@@ -22,6 +22,8 @@ public interface IBookService {
 
 //    List<Book> getDistinctBooksByTitle();
 
+    List<String> getAllDistinctAuthors();
+
     List<BookDto> getConvertedBooks(List<Book> books);
     BookDto convertToDto(Book book);
 }

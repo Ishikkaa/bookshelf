@@ -1,7 +1,10 @@
 package com.ishikapandita.bookshelf.service.user;
 
 import com.ishikapandita.bookshelf.dtos.UserDto;
+import com.ishikapandita.bookshelf.model.Role;
 import com.ishikapandita.bookshelf.model.User;
+import com.ishikapandita.bookshelf.repository.AddressRepository;
+import com.ishikapandita.bookshelf.repository.RoleRepository;
 import com.ishikapandita.bookshelf.repository.UserRepository;
 import com.ishikapandita.bookshelf.request.CreateUserRequest;
 import com.ishikapandita.bookshelf.request.UserUpdateRequest;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +26,14 @@ public class UserService implements IUserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AddressRepository addressRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     public User createUser(CreateUserRequest request) {
+        Role userRole = Optional.ofNullable(roleRepository.findByName("ROLE_USER"))
+                .orElseThrow(() -> new EntityNotFoundException("Role nor found!"));
+
         return Optional.of(request)
                 .filter(user -> !userRepository.existsByEmail(request.getEmail()))
                 .map(req -> {
@@ -33,7 +42,15 @@ public class UserService implements IUserService {
                     user.setLastName(request.getLastName());
                     user.setEmail(request.getEmail());
                     user.setPassword(passwordEncoder.encode(request.getPassword()));
-                    return userRepository.save(user);
+                    user.setRoles(Set.of(userRole));
+                    User savedUser = userRepository.save(user);
+                    Optional.ofNullable(req.getAddressList()).ifPresent(addressList -> {
+                        addressList.forEach(address -> {
+                            address.setUser(savedUser);
+                            addressRepository.save(address);
+                        });
+                    });
+                    return savedUser;
                 }).orElseThrow(() -> new EntityExistsException("Oops! " + request.getEmail() + " already exists!"));
     }
 
@@ -67,6 +84,8 @@ public class UserService implements IUserService {
     public User getAuthenticatedUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
+        System.out.println("AUTH OBJECT = " + authentication);
+        System.out.println("AUTH NAME = " + authentication.getName());
         return Optional.ofNullable(userRepository.findByEmail(email))
                 .orElseThrow(() -> new EntityNotFoundException("Log in required!"));
     }

@@ -1,9 +1,9 @@
 package com.ishikapandita.bookshelf.model;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.yaml.snakeyaml.events.Event;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -20,7 +20,10 @@ public class Book {
     private String author;
     private BigDecimal price;
     private String isbn;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
+    @Min(value = 0, message = "Inventory cannot be negative")
     private int inventory;
 
     @ManyToOne(cascade = CascadeType.ALL)

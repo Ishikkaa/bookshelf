@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/images")
 public class ImageController {
-
     private final IImageService imageService;
 
     @PostMapping("/upload")
@@ -38,7 +37,6 @@ public class ImageController {
                 .contentType(MediaType.parseMediaType(image.getFileType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
                         + image.getFileName() + "\"").body(resource);
-
     }
 
     @PutMapping("/image/{imageId}/update")

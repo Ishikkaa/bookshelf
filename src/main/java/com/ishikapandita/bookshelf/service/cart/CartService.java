@@ -1,11 +1,13 @@
 package com.ishikapandita.bookshelf.service.cart;
 
+import com.ishikapandita.bookshelf.dtos.CartDto;
 import com.ishikapandita.bookshelf.model.Cart;
 import com.ishikapandita.bookshelf.model.User;
 import com.ishikapandita.bookshelf.repository.CartItemRepository;
 import com.ishikapandita.bookshelf.repository.CartRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,6 +18,7 @@ import java.util.Optional;
 public class CartService implements ICartService{
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final ModelMapper modelMapper;
 
     @Override
     public Cart getCart(Long cartId) {
@@ -53,5 +56,10 @@ public class CartService implements ICartService{
     public BigDecimal getTotalPrice(Long cartId) {
         Cart cart = getCart(cartId);
         return cart.getTotalAmount();
+    }
+
+    @Override
+    public CartDto convertToDto(Cart cart){
+        return modelMapper.map(cart, CartDto.class);
     }
 }

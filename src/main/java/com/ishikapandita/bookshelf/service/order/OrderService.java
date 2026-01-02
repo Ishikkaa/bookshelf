@@ -3,12 +3,12 @@ package com.ishikapandita.bookshelf.service.order;
 import com.ishikapandita.bookshelf.dtos.OrderDto;
 import com.ishikapandita.bookshelf.dtos.OrderItemDto;
 import com.ishikapandita.bookshelf.enums.OrderStatus;
-import com.ishikapandita.bookshelf.model.Book;
-import com.ishikapandita.bookshelf.model.Cart;
-import com.ishikapandita.bookshelf.model.Order;
-import com.ishikapandita.bookshelf.model.OrderItem;
+import com.ishikapandita.bookshelf.enums.PaymentStatus;
+import com.ishikapandita.bookshelf.model.*;
 import com.ishikapandita.bookshelf.repository.BookRepository;
 import com.ishikapandita.bookshelf.repository.OrderRepository;
+import com.ishikapandita.bookshelf.repository.PaymentRepository;
+import com.ishikapandita.bookshelf.request.PaymentRequest;
 import com.ishikapandita.bookshelf.service.cart.ICartService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class OrderService implements IOrderService {
 
     private final OrderRepository orderRepository;
     private final BookRepository bookRepository;
+    private final PaymentRepository paymentRepository;
     private final ICartService cartService;
     private final ModelMapper modelMapper;
 
@@ -69,6 +71,35 @@ public class OrderService implements IOrderService {
                         .multiply(new BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    @Override
+    public String createPaymentIntent(PaymentRequest request) {
+        if (request.getAmount() == null ||
+                request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Invalid payment amount");
+        }
+        String clientSecret = "pi_mock_" + UUID.randomUUID();
+        Payment payment = new Payment();
+        payment.setUserId(request.getUserId());
+        payment.setAmount(request.getAmount());
+        payment.setCurrency(request.getCurrency());
+        payment.setStatus(PaymentStatus.CREATED);
+        payment.setClientSecret(clientSecret);
+
+        paymentRepository.save(payment);
+        return clientSecret;
+    }
+
+    @Override
+    public void confirmPayment(String clientSecret) {
+        Payment payment = paymentRepository
+                .findByClientSecret(clientSecret)
+                .orElseThrow(() -> new RuntimeException("Invalid payment"));
+
+        payment.setStatus(PaymentStatus.SUCCESS);
+        paymentRepository.save(payment);
+    }
+
 
     @Override
     public List<OrderDto> getUserOrders(Long userId) {

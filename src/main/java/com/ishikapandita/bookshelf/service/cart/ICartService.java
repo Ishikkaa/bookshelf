@@ -1,5 +1,6 @@
 package com.ishikapandita.bookshelf.service.cart;
 
+import com.ishikapandita.bookshelf.dtos.CartDto;
 import com.ishikapandita.bookshelf.model.Cart;
 import com.ishikapandita.bookshelf.model.User;
 
@@ -11,4 +12,6 @@ public interface ICartService {
     void clearCart(Long cartId);
     Cart initializeNewCartForUser(User user);
     BigDecimal getTotalPrice(Long cartId);
+
+    CartDto convertToDto(Cart cart);
 }
