@@ -1,7 +1,6 @@
 package com.ishikapandita.bookshelf.model;
 
 import com.ishikapandita.bookshelf.enums.AddressType;
-import com.ishikapandita.bookshelf.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

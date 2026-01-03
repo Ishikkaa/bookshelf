@@ -7,15 +7,10 @@ import com.ishikapandita.bookshelf.request.UpdateBookRequest;
 import com.ishikapandita.bookshelf.response.ApiResponse;
 import com.ishikapandita.bookshelf.service.book.IBookService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
