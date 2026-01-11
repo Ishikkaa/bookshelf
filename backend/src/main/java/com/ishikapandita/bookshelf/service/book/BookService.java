@@ -6,11 +6,14 @@ import com.ishikapandita.bookshelf.model.*;
 import com.ishikapandita.bookshelf.repository.*;
 import com.ishikapandita.bookshelf.request.AddBookRequest;
 import com.ishikapandita.bookshelf.request.UpdateBookRequest;
+import com.ishikapandita.bookshelf.service.embedding.EmbeddingService;
+import com.ishikapandita.bookshelf.service.semanticSearch.SemanticSearchService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,32 @@ public class BookService implements IBookService {
     private final OrderItemRepository orderItemRepository;
     private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
+    private final EmbeddingService embeddingService;
+    private final SemanticSearchService semanticSearchService;
+
+    private String buildTextForEmbedding(Book book) {
+        String title = book.getTitle() != null ? book.getTitle() : "Untitled";
+        String genre = book.getGenre() != null ? book.getGenre().getName() : "";
+        String tropes = (book.getTropes() != null && !book.getTropes().isEmpty())
+                ? String.join(", ", book.getTropes()) : "none";
+        String themes = (book.getThemes() != null && !book.getThemes().isEmpty())
+                ? String.join(", ", book.getThemes()) : "none";
+
+        return String.format(
+                "Book Title: %s. This is a %s novel featuring tropes like %s. It explores themes of %s. The story follows: %s",
+                title,
+                genre,
+                tropes,
+                themes,
+                summarizeDescription(book.getDescription())
+        ).toLowerCase();
+    }
+    private String summarizeDescription(String description) {
+        if (description == null) return "";
+        return description.length() > 400
+                ? description.substring(0, 400)
+                : description;
+    }
 
     @Override
     public Book addBook(AddBookRequest request) {
@@ -36,7 +65,17 @@ public class BookService implements IBookService {
                     return genreRepository.save(newGenre);
                 });
         request.setGenre(genre);
-        return bookRepository.save(createBook(request, genre));
+        Book book = createBook(request, genre);
+        book.setTropes(List.copyOf(request.getTropes()));
+        book.setThemes(List.copyOf(request.getThemes()));
+        //embedding generated ONCE
+        String embeddingText = buildTextForEmbedding(book);
+        String embeddingJson = embeddingService.generateEmbedding(embeddingText);
+        book.setEmbedding(embeddingJson);
+
+        Book savedBook = bookRepository.save(book);
+        semanticSearchService.addBookToCache(savedBook);
+        return savedBook;
     }
 
     private boolean BookExists(String title, String author) {
@@ -64,16 +103,35 @@ public class BookService implements IBookService {
     }
 
     private Book updateExistingBook(Book existingBook, UpdateBookRequest request) {
+
+        boolean semanticChanged =
+                !existingBook.getTitle().equals(request.getTitle()) ||
+                        !existingBook.getGenre().getName().equals(request.getGenre().getName()) ||
+                        !existingBook.getDescription().equals(request.getDescription()) ||
+                        !existingBook.getTropes().equals(request.getTropes()) ||
+                        !existingBook.getThemes().equals(request.getThemes());
+
         existingBook.setTitle(request.getTitle());
         existingBook.setAuthor(request.getAuthor());
         existingBook.setPrice(request.getPrice());
         existingBook.setIsbn(request.getIsbn());
         existingBook.setInventory(request.getInventory());
         existingBook.setDescription(request.getDescription());
+        existingBook.setTropes(request.getTropes());
+        existingBook.setThemes(request.getThemes());
+
         Genre genre = genreRepository.findByName(request.getGenre().getName());
         existingBook.setGenre(genre);
+
+        if (semanticChanged) {
+            String embeddingText = buildTextForEmbedding(existingBook);
+            existingBook.setEmbedding(embeddingService.generateEmbedding(embeddingText));
+            semanticSearchService.updateBookInCache(existingBook);
+        }
+
         return existingBook;
     }
+
 
     @Override
     public void deleteBookById(Long BookId) {
@@ -97,6 +155,8 @@ public class BookService implements IBookService {
                     book.setGenre(null);
 
                     bookRepository.deleteById(book.getId());
+
+                    semanticSearchService.removeBookFromCache(book.getId());
 
                 }, () -> {
                     throw new EntityNotFoundException("Book not found!");
@@ -162,5 +222,22 @@ public class BookService implements IBookService {
                 .toList();
         bookDto.setImages(imageDto);
         return bookDto;
+    }
+
+    @Override
+    public List<Book> fallbackSearch(String query) {
+        return bookRepository.fallbackSearch(query);
+    }
+
+    @Transactional
+    public void refreshAllEmbeddings() {
+        List<Book> books = bookRepository.findAll();
+        for (Book book : books) {
+            String text = buildTextForEmbedding(book);
+            book.setEmbedding(embeddingService.generateEmbedding(text));
+            bookRepository.save(book);
+            semanticSearchService.updateBookInCache(book);
+        }
+        System.out.println("All embeddings refreshed with Descriptions!");
     }
 }

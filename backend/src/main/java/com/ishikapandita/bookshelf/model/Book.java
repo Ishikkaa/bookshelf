@@ -5,13 +5,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +21,7 @@ public class Book {
     private BigDecimal price;
     private String isbn;
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT" , length = 2000)
     private String description;
     @Min(value = 0, message = "Inventory cannot be negative")
     private int inventory;
@@ -32,6 +32,26 @@ public class Book {
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "book_tropes",
+            joinColumns = @JoinColumn(name = "book_id", nullable = false)
+    )
+    @Column(name = "trope", nullable = false)
+    private List<String> tropes = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "book_themes",
+            joinColumns = @JoinColumn(name = "book_id", nullable = false)
+    )
+    @Column(name = "theme", nullable = false)
+    private List<String> themes = new ArrayList<>();
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String embedding;
 
     public Book(String title, String author, BigDecimal price, String isbn, String description, int inventory,
                 Genre genre) {

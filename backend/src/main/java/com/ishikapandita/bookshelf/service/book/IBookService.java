@@ -26,4 +26,8 @@ public interface IBookService {
 
     List<BookDto> getConvertedBooks(List<Book> books);
     BookDto convertToDto(Book book);
+
+    List<Book> fallbackSearch(String query);
+
+    void refreshAllEmbeddings();
 }
