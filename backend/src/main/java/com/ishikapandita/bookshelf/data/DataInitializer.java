@@ -12,6 +12,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
 import java.util.Set;
@@ -24,12 +25,14 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${ADMIN_PASSWORD}")
+    private String rawPassword;
 
     @Override
     public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
         Set<String> defaultRoles = Set.of("ROLE_USER" , "ROLE_ADMIN");
         createDefaultRoles(defaultRoles);
-        createDefaultAdminIfNotExits();
+        createDefaultAdminIfNotExists();
     }
 
     private void createDefaultRoles(Set<String> roles){
@@ -38,7 +41,10 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
                         .isEmpty()).map(Role::new).forEach(roleRepository::save);
     }
 
-    private void createDefaultAdminIfNotExits(){
+    private void createDefaultAdminIfNotExists(){
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalStateException("ADMIN_PASSWORD environment variable not configured");
+        }
         Role adminRole = Optional.ofNullable(roleRepository.findByName("ROLE_ADMIN"))
                 .orElseThrow(() -> new EntityNotFoundException("Role not found"));
         for (int i = 1; i<=3; i++){
@@ -50,7 +56,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
             user.setFirstName("Admin");
             user.setLastName("Shop User" + i);
             user.setEmail(defaultEmail);
-            user.setPassword(passwordEncoder.encode("123456"));
+            user.setPassword(passwordEncoder.encode(rawPassword));
             user.setRoles(Set.of(adminRole));
             userRepository.save(user);
         }

@@ -17,4 +17,6 @@ public class BookDto {
     private int inventory;
     private Genre genre;
     private List<ImageDto> images;
+    private List<String> tropes;
+    private List<String> themes;
 }

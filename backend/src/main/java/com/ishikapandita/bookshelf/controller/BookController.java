@@ -6,7 +6,9 @@ import com.ishikapandita.bookshelf.request.AddBookRequest;
 import com.ishikapandita.bookshelf.request.UpdateBookRequest;
 import com.ishikapandita.bookshelf.response.ApiResponse;
 import com.ishikapandita.bookshelf.service.book.IBookService;
+import com.ishikapandita.bookshelf.service.semanticSearch.SemanticSearchService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequestMapping("${api.prefix}/books")
 public class BookController {
     private final IBookService bookService;
+    private final SemanticSearchService semanticSearchService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllBooks() {
@@ -96,4 +99,24 @@ public class BookController {
         return ResponseEntity.ok(new ApiResponse("Found", bookService.getAllDistinctAuthors()));
     }
 
+    @GetMapping("/semantic-search")
+    public ResponseEntity<ApiResponse> semanticSearch(@RequestParam String query) {
+        List<Book> books = semanticSearchService.semanticSearch(query);
+        if (books.isEmpty()) {
+            books = bookService.fallbackSearch(query);
+        }
+        List<BookDto> convertedBooks =  bookService.getConvertedBooks(books);
+        return ResponseEntity.ok(new ApiResponse("success", convertedBooks));
+    }
+
+    @PostMapping("/refresh-embeddings")
+    public ResponseEntity<ApiResponse> refreshEmbeddings() {
+        try {
+            bookService.refreshAllEmbeddings();
+            return ResponseEntity.ok(new ApiResponse("Successfully re-indexed books!", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Error during re-indexing: " + e.getMessage(), null));
+        }
+    }
 }
