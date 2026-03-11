@@ -1,4 +1,4 @@
-# 📚 BookShelf — Hybrid Semantic Book Discovery Platform
+# 📚 BookShelf - AI-Powered Online Bookstore
 
 A full-stack online library application featuring **hybrid semantic search**, an **admin management panel**, and **role-based authentication**. Built with **React, Spring Boot, and MySQL**.
 
