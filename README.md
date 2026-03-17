@@ -12,12 +12,12 @@ A full-stack online library application featuring **hybrid semantic search**, an
 * **Genre-Aware Ranking:** Results boosted using book genre and metadata
 * **Dynamic Filtering:** Filter books by genre and browse results with pagination
 
-### User Features
+### Performance & Reliability
 
 * **Redis Caching:** Reduced average API latency by 73% for book retrieval endpoints and eliminated redundant DB queries on cache hits.
 * **RabbitMQ Async Messaging:** Decoupled email notifications from the main API using durable queues and dead-letter queues for fault-tolerant, reliable message delivery.
 
-### Performance & Reliability
+### User Features 
 
 * Browse books with pagination, sorting, and filtering
 * Shopping cart and **demo checkout flow**
