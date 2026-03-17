@@ -4,16 +4,25 @@ import com.ishikapandita.bookshelf.dtos.BookDto;
 import com.ishikapandita.bookshelf.model.Book;
 import com.ishikapandita.bookshelf.request.AddBookRequest;
 import com.ishikapandita.bookshelf.request.UpdateBookRequest;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 
 public interface IBookService {
     Book addBook(AddBookRequest request);
     Book UpdateBook(UpdateBookRequest request, Long BookId);
+
+    @Cacheable(value = "bookCache", key = "'allBooks'")
+    List<BookDto> getAllBooksDto();
+
     Book getBookById(Long BookId);
     void deleteBookById(Long BookId);
 
     List<Book> getAllBooks();
+
+    @Cacheable(value = "bookCache", key = "#bookId")
+    BookDto getBookDtoById(Long bookId);
+
     List<Book> getBooksByGenreAndAuthor(String genre, String author);
     List<Book> getBooksByGenre(String genre);
     List<Book> getBooksByAuthorAndTitle(String author, String title);

@@ -11,13 +11,17 @@ import com.ishikapandita.bookshelf.service.semanticSearch.SemanticSearchService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookService implements IBookService {
@@ -29,6 +33,7 @@ public class BookService implements IBookService {
     private final ImageRepository imageRepository;
     private final EmbeddingService embeddingService;
     private final SemanticSearchService semanticSearchService;
+    private final OutboxRepository outboxRepository;
 
     private String buildTextForEmbedding(Book book) {
         String title = book.getTitle() != null ? book.getTitle() : "Untitled";
@@ -54,6 +59,7 @@ public class BookService implements IBookService {
                 : description;
     }
 
+    @CacheEvict(value = "bookListCache", key = "'allBooks'", beforeInvocation = true)
     @Override
     public Book addBook(AddBookRequest request) {
         if (BookExists(request.getTitle(), request.getAuthor())) {
@@ -75,6 +81,18 @@ public class BookService implements IBookService {
 
         Book savedBook = bookRepository.save(book);
         semanticSearchService.addBookToCache(savedBook);
+//        try {
+//            publisherService.sendBookNotification("New book added: " + savedBook.getTitle());
+//        } catch (Exception e) {
+//            log.error("RabbitMQ publish failed", e);
+//        }
+        // create event
+        OutboxEvent event = new OutboxEvent();
+        event.setEventType("BOOK_CREATED");
+        event.setPayload("Book: " + savedBook.getTitle() + " by " + savedBook.getAuthor());
+
+        outboxRepository.save(event);
+
         return savedBook;
     }
 
@@ -94,6 +112,10 @@ public class BookService implements IBookService {
         );
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "bookCache", key = "#BookId", beforeInvocation = true),
+            @CacheEvict(value = "bookListCache", key = "'allBooks'", beforeInvocation = true)
+    })
     @Override
     public Book UpdateBook(UpdateBookRequest request, Long BookId) {
         return bookRepository.findById(BookId)
@@ -132,7 +154,10 @@ public class BookService implements IBookService {
         return existingBook;
     }
 
-
+    @Caching(evict = {
+            @CacheEvict(value = "bookCache", key = "#BookId", beforeInvocation = true),
+            @CacheEvict(value = "bookListCache", key = "'allBooks'", beforeInvocation = true)
+    })
     @Override
     public void deleteBookById(Long BookId) {
         bookRepository.findById(BookId)
@@ -168,10 +193,27 @@ public class BookService implements IBookService {
         return bookRepository.findAll();
     }
 
+    @Cacheable(value = "bookListCache", key = "'allBooks'")
+    @Override
+    public List<BookDto> getAllBooksDto() {
+        List<Book> books = bookRepository.findAll();
+        return books.stream()
+                .map(this::convertToDto)
+                .toList();
+    }
+
     @Override
     public Book getBookById(Long BookId) {
         return bookRepository.findById(BookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found"));
+    }
+
+    @Cacheable(value = "bookCache", key = "#bookId")
+    @Override
+    public BookDto getBookDtoById(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book not found"));
+        return convertToDto(book);
     }
 
     @Override

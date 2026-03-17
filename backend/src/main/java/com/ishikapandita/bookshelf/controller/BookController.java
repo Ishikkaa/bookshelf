@@ -6,8 +6,11 @@ import com.ishikapandita.bookshelf.request.AddBookRequest;
 import com.ishikapandita.bookshelf.request.UpdateBookRequest;
 import com.ishikapandita.bookshelf.response.ApiResponse;
 import com.ishikapandita.bookshelf.service.book.IBookService;
+import com.ishikapandita.bookshelf.service.book.MailService;
 import com.ishikapandita.bookshelf.service.semanticSearch.SemanticSearchService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,20 +22,20 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/books")
 public class BookController {
+    @Autowired
+    private MailService mailService;
     private final IBookService bookService;
     private final SemanticSearchService semanticSearchService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllBooks() {
-        List<Book> books = bookService.getAllBooks();
-        List<BookDto> convertedBooks = bookService.getConvertedBooks(books);
-        return ResponseEntity.ok(new ApiResponse("Found", convertedBooks));
+        List<BookDto> booksDto = bookService.getAllBooksDto();
+        return ResponseEntity.ok(new ApiResponse("Found", booksDto));
     }
 
     @GetMapping("book/{bookId}/book")
     public ResponseEntity<ApiResponse> getBookById(@PathVariable Long bookId) {
-        Book book = bookService.getBookById(bookId);
-        BookDto bookDto = bookService.convertToDto(book);
+        BookDto bookDto = bookService.getBookDtoById(bookId);
         return ResponseEntity.ok(new ApiResponse("Found!", bookDto));
     }
 
@@ -82,9 +85,8 @@ public class BookController {
 
     @GetMapping("/book/by-author")
     public ResponseEntity<ApiResponse> getBooksByAuthor(@RequestParam String author) {
-        List<Book> books = bookService.getBooksByAuthor(author);
-        List<BookDto> convertedBooks = bookService.getConvertedBooks(books);
-        return ResponseEntity.ok(new ApiResponse("success", convertedBooks));
+        List<BookDto> books = bookService.getAllBooksDto();
+        return ResponseEntity.ok(new ApiResponse("success", books));
     }
 
     @GetMapping("/book/{genre}/all/books")
@@ -118,5 +120,11 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse("Error during re-indexing: " + e.getMessage(), null));
         }
+    }
+
+    @PostMapping("/send-test-email")
+    public ResponseEntity<String> sendTestEmail() throws MessagingException {
+        mailService.sendEmail("ishikapandita8@gmail.com", "Test Subject", "Hello from Bookshelf!");
+        return ResponseEntity.ok("Email sent!");
     }
 }
