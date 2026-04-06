@@ -17,7 +17,7 @@ public class OutboxPublisher {
     @Autowired
     private PublisherService publisherService;
 
-    @Scheduled(fixedRate = 5000) // every 5 sec
+    @Scheduled(fixedRate = 5000)
     public void publishEvents() {
         List<OutboxEvent> events = outboxRepository.findByProcessedFalse();
 
@@ -27,7 +27,7 @@ public class OutboxPublisher {
                 event.setProcessed(true);
                 outboxRepository.save(event);
             } catch (Exception e) {
-                // DO NOTHING → retry later
+                System.out.println("❌ Failed to publish event, will retry: " + e.getMessage());
             }
         }
     }
