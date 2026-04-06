@@ -1,6 +1,7 @@
-📚 BookShelf 
+#📚 BookShelf - AI-Powered Online Bookstore#
 
 A full-stack application with a backend-centric architecture, designed to deliver low-latency, scalable, and reliable user experiences using caching, asynchronous messaging, and hybrid search. Designed with production-oriented principles including scalability, fault tolerance, and performance optimization.
+
 ---
 
 # 🧠 Architecture Overview
