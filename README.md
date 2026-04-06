@@ -58,7 +58,7 @@ Frequently accessed book data is cached in Redis.
 
 **Impact:** Validated API performance under concurrent load (50 users, 500 requests)
 - Reduced average latency from ~88ms to ~14ms (~84% improvement) using Redis caching  
-- Increased throughput from ~568 req/sec to ~3560 req/sec (~6.2× improvement)
+- Increased throughput from ~568 req/sec to ~3560 req/sec (~6.4× improvement)
 - Eliminated tail latency spikes (max latency reduced from 605ms → 36ms)
 
 **Trade-off:**
