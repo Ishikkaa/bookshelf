@@ -15,21 +15,7 @@ BookShelf is designed as a scalable backend system with clear separation of conc
 - **Message Queue (RabbitMQ)** – Enables asynchronous processing for non-blocking workflows
 
 ### High-Level Flow:
-Client
-  ↓
-Spring Boot API
-  ↓
-MySQL (DB)
-  ↓
-Outbox Table
-  ↓
-Outbox Worker
-  ↓
-RabbitMQ
-  ↓
-Consumer
-  ↓
-Email Service
+Client → Spring Boot API → MySQL (DB) → Outbox Table → Outbox Worker → RabbitMQ → Consumer → Email Service
 
 Reads:
 Client → API → Redis → MySQL (fallback)
