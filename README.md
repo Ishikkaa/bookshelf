@@ -89,16 +89,10 @@ Search combines:
 - Enables intent-based discovery
 - Maintains accuracy for exact matches
 
----
+<img width="1470" height="729" alt="Screenshot 2026-04-06 at 3 02 40 PM" src="https://github.com/user-attachments/assets/ab9aab33-d1b4-498a-b280-d6aa6be83fb4" />
 
-### 4. Outbox + Reliability Patterns
-Implemented the outbox pattern to ensure reliable event publishing in coordination with database transactions.
+<img width="1470" height="724" alt="Screenshot 2026-04-06 at 3 02 10 PM" src="https://github.com/user-attachments/assets/d15e5694-d3b6-43ca-9073-b914e2234b2c" />
 
-**Why:**
-- Prevents event loss during partial failures
-- Ensures consistency between database state and emitted events
-- Improves reliability of asynchronous workflows
-  
 ---
 
 # 🚀 Performance & Reliability
