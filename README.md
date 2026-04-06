@@ -40,7 +40,14 @@ Designed to handle increasing load by scaling read-heavy operations via caching 
 # ⚙️ Key Engineering Decisions
 
 ### 1. Asynchronous Processing with RabbitMQ
-Instead of calling the email service synchronously, events are published to RabbitMQ.
+Implemented an event-driven email notification pipeline using RabbitMQ with reliability mechanisms to ensure message delivery and fault tolerance.
+
+**Design:**
+- Events are published using an Outbox Pattern to prevent message loss during database transactions or broker downtime
+- A main queue (bookQueue) processes events and triggers email sending via a consumer
+- A retry queue with TTL handles transient failures by delaying and reprocessing messages
+- A Dead Letter Queue (DLQ) captures messages that exceed retry limits or fail permanently
+- Retry limits are enforced using RabbitMQ’s x-death header, preventing infinite retry loops
 
 **Why:**
 - Prevents API latency increase due to slow external services
@@ -49,6 +56,12 @@ Instead of calling the email service synchronously, events are published to Rabb
 
 **Trade-off:**
 - Increased system complexity due to asynchronous workflows and eventual consistency
+
+<img width="1468" height="534" alt="Screenshot 2026-04-06 at 1 49 29 PM" src="https://github.com/user-attachments/assets/e3a7670e-7abe-48fd-ac90-9ae9aa659520" />
+
+<img width="1452" height="536" alt="Screenshot 2026-04-06 at 1 58 37 PM" src="https://github.com/user-attachments/assets/06e837d9-7a0a-4ec5-b1c5-67e4f29ce5ee" />
+
+<img width="1459" height="576" alt="Screenshot 2026-04-06 at 1 59 25 PM" src="https://github.com/user-attachments/assets/337f0be7-5446-438f-8a7a-b6fb81aff190" />
 
 ---
 
@@ -59,18 +72,6 @@ Frequently accessed book data is cached in Redis.
 - Reduced average latency from ~88ms to ~14ms (~84% improvement) using Redis caching  
 - Increased throughput from ~568 req/sec to ~3560 req/sec (~6.2× improvement)
 - Eliminated tail latency spikes (max latency reduced from 605ms → 36ms)
-
-<img width="676" height="693" alt="ColdCache50" src="https://github.com/user-attachments/assets/ee4ffdb0-321c-43d5-a863-2313d1ec67d5" />
-Cold cache:
-Time per request → 88 ms
-Requests/sec → 568
-Max → 605 ms
-
-<img width="679" height="707" alt="WarmCache50" src="https://github.com/user-attachments/assets/72e7c81a-55fb-49c5-9910-f792b588ebd6" />
-Warm cache:
-Time per request → 14 ms
-Requests/sec → 3560
-Max → 36 ms
 
 **Trade-off:**
 - Accepts eventual consistency between cache and database
