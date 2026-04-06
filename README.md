@@ -76,6 +76,20 @@ Frequently accessed book data is cached in Redis.
 **Trade-off:**
 - Accepts eventual consistency between cache and database
 
+<img width="676" height="693" alt="ColdCache50" src="https://github.com/user-attachments/assets/26a89e82-9a94-4065-afad-d09a86bfb9d8" />
+
+**Cold cache:
+Time per request → 88 ms
+Requests/sec → 568
+Max → 605 ms**
+
+<img width="679" height="707" alt="WarmCache50" src="https://github.com/user-attachments/assets/98dad6ae-54ee-4c3c-a27b-3f5532ca82d5" />
+
+**Warm cache:
+Time per request → 14 ms
+Requests/sec → 3560
+Max → 36 ms**
+
 ---
 
 ### 3. Hybrid Search Design
