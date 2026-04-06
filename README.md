@@ -1,21 +1,132 @@
-# 📚 BookShelf - AI-Powered Online Bookstore
+📚 BookShelf 
 
-A full-stack online library application featuring **hybrid semantic search**, an **admin management panel**, and **role-based authentication**. Built with **React, Spring Boot, and MySQL**.
+A full-stack application with a backend-centric architecture, designed to deliver low-latency, scalable, and reliable user experiences using caching, asynchronous messaging, and hybrid search. Designed with production-oriented principles including scalability, fault tolerance, and performance optimization.
+---
+
+# 🧠 Architecture Overview
+
+BookShelf is designed as a scalable backend system with clear separation of concerns and asynchronous processing for improved performance and reliability.
+
+### System Components:
+- **API Layer (Spring Boot)** – Handles client requests and business logic
+- **Database (MySQL)** – Stores book, user, and order data
+- **Cache Layer (Redis)** – Reduces database load and improves read latency
+- **Message Queue (RabbitMQ)** – Enables asynchronous processing for non-blocking workflows
+
+### High-Level Flow:
+Client
+  ↓
+Spring Boot API
+  ↓
+MySQL (DB)
+  ↓
+Outbox Table
+  ↓
+Outbox Worker
+  ↓
+RabbitMQ
+  ↓
+Consumer
+  ↓
+Email Service
+
+Reads:
+Client → API → Redis → MySQL (fallback)
+
+This architecture ensures low latency for user-facing APIs while handling slow operations asynchronously. 
+Designed to handle increasing load by scaling read-heavy operations via caching and decoupling write/side-effect workflows using asynchronous messaging.
+---
+
+# ⚙️ Key Engineering Decisions
+
+### 1. Asynchronous Processing with RabbitMQ
+Instead of calling the email service synchronously, events are published to RabbitMQ.
+
+**Why:**
+- Prevents API latency increase due to slow external services
+- Improves system reliability with retries and dead-letter queues
+- Decouples core application logic from notification workflows
+
+**Trade-off:**
+- Increased system complexity due to asynchronous workflows and eventual consistency
 
 ---
 
-# ✨ Key Features
+### 2. Redis Caching Strategy
+Frequently accessed book data is cached in Redis.
+
+**Impact:** Validated API performance under concurrent load (50 users, 500 requests)
+- Reduced average latency from ~88ms to ~14ms (~84% improvement) using Redis caching  
+- Increased throughput from ~568 req/sec to ~3560 req/sec (~6.2× improvement)
+- Eliminated tail latency spikes (max latency reduced from 605ms → 36ms)
+
+<img width="676" height="693" alt="ColdCache50" src="https://github.com/user-attachments/assets/ee4ffdb0-321c-43d5-a863-2313d1ec67d5" />
+Cold cache:
+Time per request → 88 ms
+Requests/sec → 568
+Max → 605 ms
+
+<img width="679" height="707" alt="WarmCache50" src="https://github.com/user-attachments/assets/72e7c81a-55fb-49c5-9910-f792b588ebd6" />
+Warm cache:
+Time per request → 14 ms
+Requests/sec → 3560
+Max → 36 ms
+
+**Trade-off:**
+- Accepts eventual consistency between cache and database
+
+---
+
+### 3. Hybrid Search Design
+Search combines:
+- semantic similarity (vector embeddings)
+- keyword matching
+
+**Why:**
+- Enables intent-based discovery
+- Maintains accuracy for exact matches
+
+---
+
+### 4. Outbox + Reliability Patterns
+Implemented the outbox pattern to ensure reliable event publishing in coordination with database transactions.
+
+**Why:**
+- Prevents event loss during partial failures
+- Ensures consistency between database state and emitted events
+- Improves reliability of asynchronous workflows
+  
+---
+
+# 🚀 Performance & Reliability
+
+- Redis caching reduces database load and improves response times for frequently accessed book data
+- Asynchronous processing using RabbitMQ prevents blocking API requests for email notifications
+- Designed APIs with pagination and filtering to handle larger datasets efficiently
+- Structured backend with clear separation of concerns for maintainability and scalability
+
+The system is designed to remain responsive by offloading non-critical operations to background consumers and minimizing unnecessary database access.
+
+---
+
+# 🛡️ Fault Tolerance
+
+- Dead Letter Queues (DLQ) for failed message handling
+- Retry mechanisms for transient failures
+- Input validation and null-safety at API boundaries
+- Decoupled services to avoid cascading failures
+
+These patterns ensure the system remains stable even when individual components fail.
+
+---
+
+# 📦 Product Features
 
 ### Smart Search
 
 * **Hybrid Search:** Combines vector embeddings (semantic similarity) with keyword matching
 * **Genre-Aware Ranking:** Results boosted using book genre and metadata
 * **Dynamic Filtering:** Filter books by genre and browse results with pagination
-
-### Performance & Reliability
-
-* **Redis Caching:** Reduced average API latency by 73% for book retrieval endpoints and eliminated redundant DB queries on cache hits.
-* **RabbitMQ Async Messaging:** Decoupled email notifications from the main API using durable queues and dead-letter queues for fault-tolerant, reliable message delivery.
 
 ### User Features 
 
@@ -212,13 +323,7 @@ POST /api/admin/genres
 
 # 🚧 Known Limitations
 
-This project is designed as a portfolio demo.
-
-In production I would add: 
-cloud image storage,
-payment gateway integration,
-rate limiting and
-monitoring
+In a production environment, this system would be extended with cloud-based media storage, payment integration, rate limiting, observability (metrics, logging, tracing), and automated scaling strategies.
 
 ---
 
